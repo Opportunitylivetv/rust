@@ -49,10 +49,11 @@ fn main() {
     } else {
         env::var_os("RUSTC_REAL").unwrap()
     };
+    let stage = env::var("RUSTC_STAGE").unwrap();
 
     let mut cmd = Command::new(rustc);
     cmd.args(&args)
-       .arg("--cfg").arg(format!("stage{}", env::var("RUSTC_STAGE").unwrap()));
+       .arg("--cfg").arg(format!("stage{}", stage));
 
     if target.is_none() {
         // Build scripts are always built with the snapshot compiler, so we need
@@ -80,6 +81,22 @@ fn main() {
         if let Ok(s) = env::var("RUSTC_FLAGS") {
             cmd.args(&s.split(" ").filter(|s| !s.is_empty()).collect::<Vec<_>>());
         }
+    }
+
+    // If we're compiling specifically the `panic_abort` crate then we pass the
+    // `-C panic=abort` option. Note that we do not do this for any other crate
+    // intentionally as this is the only crate for now that we ship with
+    // panic=abort.
+    //
+    // This... is a bit of a hack how we detect this. Ideally this information
+    // should be encoded in the crate I guess? Would likely require an RFC
+    // amendment to RFC 1513, however.
+    let is_panic_abort = args.windows(2).any(|a| {
+        &*a[0] == "--crate-name" && &*a[1] == "panic_abort"
+    });
+    // FIXME(stage0): remove this `stage != "0"` condition
+    if is_panic_abort && stage != "0" {
+        cmd.arg("-C").arg("panic=abort");
     }
 
     // Set various options from config.toml to configure how we're building

@@ -245,6 +245,7 @@
 #![feature(on_unimplemented)]
 #![feature(oom)]
 #![feature(optin_builtin_traits)]
+#![feature(panic_unwind)]
 #![feature(placement_in_syntax)]
 #![feature(rand)]
 #![feature(raw)]
@@ -282,6 +283,13 @@
 #![allow(unused_features)] // std may use features in a platform-specific way
 #![cfg_attr(not(stage0), deny(warnings))]
 
+// FIXME(stage0): after a snapshot, move needs_panic_runtime up above and remove
+//                this `extern crate` declaration and feature(panic_unwind)
+#![cfg_attr(not(stage0), needs_panic_runtime)]
+#![cfg_attr(not(stage0), feature(panic_runtime))]
+#[cfg(stage0)]
+extern crate panic_unwind as __please_just_link_me_dont_reference_me;
+
 #[cfg(test)] extern crate test;
 
 // We want to reexport a few macros from core but libcore has already been
@@ -299,6 +307,9 @@ extern crate collections as core_collections;
 extern crate alloc;
 extern crate rustc_unicode;
 extern crate libc;
+
+// We always need an unwinder currently for backtraces
+extern crate unwind;
 
 #[cfg(stage0)]
 extern crate alloc_system;

@@ -789,16 +789,17 @@ impl<'a> CrateReader<'a> {
                             krate: ast::CrateNum,
                             what: &str,
                             needs_dep: &Fn(&cstore::crate_metadata) -> bool) {
+        // don't perform this validation if the session has errors, as one of
+        // those errors may indicate a circular dependency which could cause
+        // this to stack overflow.
+        if self.sess.has_errors() {
+            return
+        }
+
         // Before we inject any dependencies, make sure we don't inject a
         // circular dependency by validating that this crate doesn't
         // transitively depend on any crates satisfying `needs_dep`.
-        //
-        // Also don't perform this validation if the session has errors, as one
-        // of those errors may indicate a circular dependency which could cause
-        // this to stack overflow.
-        if !self.sess.has_errors() {
-            validate(self, krate, krate, what, needs_dep);
-        }
+        validate(self, krate, krate, what, needs_dep);
 
         // All crates satisfying `needs_dep` do not explicitly depend on the
         // crate provided for this compile, but in order for this compilation to

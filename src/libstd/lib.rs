@@ -286,7 +286,7 @@
 // FIXME(stage0): after a snapshot, move needs_panic_runtime up above and remove
 //                this `extern crate` declaration and feature(panic_unwind)
 #![cfg_attr(not(stage0), needs_panic_runtime)]
-#![cfg_attr(not(stage0), feature(panic_runtime))]
+#![cfg_attr(not(stage0), feature(needs_panic_runtime))]
 #[cfg(stage0)]
 extern crate panic_unwind as __please_just_link_me_dont_reference_me;
 
